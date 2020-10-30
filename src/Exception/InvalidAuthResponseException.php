@@ -1,6 +1,6 @@
 <?php
 
-namespace Omnipay\FirstData\Exception;
+namespace Omnipay\Nuvei\Exception;
 
 use Omnipay\Common\Exception\OmnipayException;
 

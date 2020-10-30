@@ -3,7 +3,7 @@
  * Ach Helper Class
  */
 
-namespace Omnipay\FirstData;
+namespace Omnipay\Nuvei;
 
 class AchHelper
 {

@@ -3,13 +3,13 @@
  * Credit Ach class
  */
 
-namespace Omnipay\FirstData;
+namespace Omnipay\Nuvei;
 
 use DateTime;
 use DateTimeZone;
 use Omnipay\Common\Helper;
 use Omnipay\Common\ParametersTrait;
-use Omnipay\FirstData\Exception\InvalidAchException;
+use Omnipay\Nuvei\Exception\InvalidAchException;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 /**

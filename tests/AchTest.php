@@ -1,8 +1,9 @@
 <?php
 
-namespace Omnipay\FirstData;
+namespace Omnipay\Nuvei;
 
 use Omnipay\Common\Exception\InvalidRequestException;
+use Omnipay\Nuvei\Ach;
 use Omnipay\Tests\TestCase;
 
 class AchTest extends TestCase
@@ -12,13 +13,6 @@ class AchTest extends TestCase
 
     public function setUp()
     {
-        // [
-        //     'firstName'            => 'Example',
-        //     'lastName'             => 'Customer',
-        //     'routingNumber'        => '021000021',
-        //     'accountNumber'        => '2020',
-        //     'checkNumber'          => '123',
-        // ]
         $this->ach = new Ach;
         $this->ach->setRoutingNumber('021000021');
         $this->ach->setAccountNumber('2020');
@@ -62,7 +56,7 @@ class AchTest extends TestCase
     }
 
     /**
-     * @expectedException \Omnipay\FirstData\Exception\InvalidAchException
+     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
      * @expectedExceptionMessage The routing number is required
      */
     public function testValidateRoutingNumberRequired()
@@ -72,7 +66,7 @@ class AchTest extends TestCase
     }
 
     /**
-     * @expectedException \Omnipay\FirstData\Exception\InvalidAchException
+     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
      * @expectedExceptionMessage The account number is required
      */
     public function testValidateAccountNumberRequired()
@@ -82,7 +76,7 @@ class AchTest extends TestCase
     }
 
     /**
-     * @expectedException \Omnipay\FirstData\Exception\InvalidAchException
+     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
      * @expectedExceptionMessage The first name is required
      */
     public function testValidateFirstNameRequired()
@@ -92,7 +86,7 @@ class AchTest extends TestCase
     }
 
     /**
-     * @expectedException \Omnipay\FirstData\Exception\InvalidAchException
+     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
      * @expectedExceptionMessage The last name is required
      */
     public function testValidateLastNameRequired()
@@ -102,7 +96,7 @@ class AchTest extends TestCase
     }
 
     /**
-     * @expectedException \Omnipay\FirstData\Exception\InvalidAchException
+     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
      * @expectedExceptionMessage Routing Number is invalid
      */
     public function testValidateRoutingNumber()

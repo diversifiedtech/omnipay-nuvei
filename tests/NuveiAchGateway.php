@@ -1,16 +1,16 @@
 <?php
 
-namespace Omnipay\FirstData;
+namespace Omnipay\Nuvei;
 
 use Omnipay\Common\CreditCard;
 use Omnipay\Common\Exception\InvalidCreditCardException;
 use Omnipay\Common\Exception\InvalidRequestException;
-use Omnipay\FirstData\Exception\InvalidAchException;
+use Omnipay\Nuvei\Exception\InvalidAchException;
 use Omnipay\Tests\GatewayTestCase;
 
-class PayeezyAchGatewayTest extends GatewayTestCase
+class NuveiAchGateway extends GatewayTestCase
 {
-    /** @var  PayeezyGateway */
+    /** @var  NuveiGateway */
     protected $gateway;
 
     /** @var  array */
@@ -20,7 +20,7 @@ class PayeezyAchGatewayTest extends GatewayTestCase
     {
         parent::setUp();
 
-        $this->gateway = new PayeezyGateway($this->getHttpClient(), $this->getHttpRequest());
+        $this->gateway = new NuveiGateway($this->getHttpClient(), $this->getHttpRequest());
         $this->gateway->setGatewayId('1234');
         $this->gateway->setPassword('abcde');
 

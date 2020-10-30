@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ERROR><ERRORSTRING>cvc-minLength-valid: Value &apos;&apos; with length = &apos;0&apos; is not facet-valid with respect to minLength &apos;10&apos; for type &apos;#AnonType_CARDNUMBER&apos;.</ERRORSTRING></ERROR>

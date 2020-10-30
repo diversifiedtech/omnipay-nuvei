@@ -1,27 +1,24 @@
 <?php
 /**
- * First Data Payeezy Gateway
+ * Nuvei  Gateway
  */
 namespace Omnipay\Nuvei;
 
 use Omnipay\Common\AbstractGateway;
+use Omnipay\Nuvei\Message\NuveiAuthorizeRequest;
+use Omnipay\Nuvei\Message\NuveiPurchaseRequest;
 
 /**
- * First Data Payeezy Gateway
+ * Nuvei Xml Gateway
  *
- * The First Data Global Gateway e4 (previously referred to as "First Data Global", and so if you see
- * internet references to the First Data Global Gateway, they are probably referring to this one, distinguished
- * by having URLs like "api.globalgatewaye4.firstdata.com") is now called the Payeezy Gateway and is
- * referred to here as the First Data Payeezy Gateway.
- *
- * API details for the Payeezy gateway are at the links below.
+ * API details for the Nuvei Xml Gateway are at the links below.
  *
  * ### Example
  *
  * <code>
- * // Create a gateway for the First Data Payeezy Gateway
+ * // Create a gateway for the Nuvei Gateway
  * // (routes to GatewayFactory::create)
- * $gateway = Omnipay::create('FirstData_Payeezy');
+ * $gateway = Omnipay::create('Nuvei');
  *
  * // Initialise the gateway
  * $gateway->initialize(array(
@@ -50,8 +47,9 @@ use Omnipay\Common\AbstractGateway;
  * $transaction = $gateway->purchase(array(
  *     'description'              => 'Your order for widgets',
  *     'amount'                   => '10.00',
- *     'transactionId'            => 12345,
+ *     'transactionId'            => 12345, // OrderId
  *     'clientIp'                 => $_SERVER['REMOTE_ADDR'],
+ *     'currency'                 => 'USA'
  *     'card'                     => $card,
  * ));
  * $response = $transaction->send();
@@ -65,36 +63,30 @@ use Omnipay\Common\AbstractGateway;
  * ### Test Accounts
  *
  * Test accounts can be obtained here:
- * https://provisioning.demo.globalgatewaye4.firstdata.com/signup
+ * https://provisioning.demo.globalgatewaye4.Nuvei.com/signup
  * Note that only USD transactions are supported for test accounts.
  *
  * Once you have created a test account, log in to the gateway here:
- * https://demo.globalgatewaye4.firstdata.com/main
- * Navigate to Administration -> Terminals and click on the terminal with TERM ECOMM name,
- * There will be a Gateway ID displayed there and you can also generate a password.
+ * https://testpayments.nuvei.com/merchant/selfcare/controller/selfcareindex
+ * You must request test credentials
  *
  * Test credit card numbers can be found here:
- * https://support.payeezy.com/hc/en-us/articles/204504235-Using-test-credit-card-numbers
+ * https://support.Nuvei.com/hc/en-us/articles/204504235-Using-test-credit-card-numbers
  *
  * ### Quirks
  *
- * This gateway requires both a transaction reference (aka an authorization number)
- * and a transaction tag to implement either voids or refunds.  These are referred
- * to in the documentation as "tagged refund" and "tagged voids".
- *
- * Card token transactions are supported (these are referred to in the documentation as
- * "TransArmor Multi-Pay") but have to be enabled for each merchant account.  There is no
- * createCard method, instead a card token is generated when a zero dollar authorization
- * is submitted.
- *
- * Void and Refund transactions require the amount parameter.
- *
- * @link https://support.payeezy.com/hc/en-us
- * @link https://provisioning.demo.globalgatewaye4.firstdata.com/signup
- * @link https://support.payeezy.com/hc/en-us/articles/204504235-Using-test-credit-card-numbers
+ * This gateway accepts XML requests.
+ * This gateway expects a unique orderId for every transaction
+ * This gateway expects a secret code that gets hashed with the rest
+ * of the parameters for validation
  */
 class Gateway extends AbstractGateway
 {
+
+    public static function generateUniqueOrderId(){
+        return substr(md5(microtime() . uniqid()), 0, 20);
+    }
+
     public function getName()
     {
         return 'Nuvei XML Gateway';
@@ -103,128 +95,76 @@ class Gateway extends AbstractGateway
     public function getDefaultParameters()
     {
         return array(
-            'gatewayId' => '',
-            'password'  => '',
-            'keyId'     => '',
-            'hmac'      => '',
-            'testMode'  => false,
+            'terminalId' => '',
+            'secret' => '',
+            // 'currency' => 'USD',
+            'testMode' => false,
         );
     }
 
     /**
-     * Get Gateway ID
+     * Get Terminal ID
      *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
-     *
-     * @return string
-     */
-    public function getGatewayId()
-    {
-        return $this->getParameter('gatewayId');
-    }
-
-    /**
-     * Set Gateway ID
-     *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
-     *
-     * @return PayeezyGateway provides a fluent interface.
-     */
-    public function setGatewayId($value)
-    {
-        return $this->setParameter('gatewayId', $value);
-    }
-
-    /**
-     * Get Password
-     *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
+     * Calls to the API are secured with a terminal ID and
+     * secret.
      *
      * @return string
      */
-    public function getPassword()
+    public function getTerminalId()
     {
-        return $this->getParameter('password');
+        return $this->getParameter('terminalId');
     }
 
     /**
-     * Set Password
+     * Set Terminal ID
      *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
+     * Calls to the API are secured with a terminal ID and
+     * secret.
      *
-     * @return PayeezyGateway provides a fluent interface.
+     * @return Gateway provides a fluent interface.
      */
-    public function setPassword($value)
+    public function setTerminalId($value)
     {
-        return $this->setParameter('password', $value);
+        return $this->setParameter('terminalId', $value);
     }
 
     /**
-     * Get Key Id
+     * Get Secret
      *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
+     * Calls to the API are secured with a terminal ID and
+     * secret.
      *
      * @return string
      */
-    public function getKeyId()
+    public function getSecret()
     {
-        return $this->getParameter('keyId');
+        return $this->getParameter('secret');
     }
 
     /**
-     * Set Key Id
+     * Set Secret
      *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
+     * Calls to the API are secured with a terminal ID and
+     * secret.
      *
-     * @return PayeezyGateway provides a fluent interface.
+     * @return Gateway provides a fluent interface.
      */
-    public function setKeyId($value)
+    public function setSecret($value)
     {
-        return $this->setParameter('keyId', $value);
+        return $this->setParameter('secret', $value);
     }
 
-    /**
-     * Get Hmac
-     *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
-     *
-     * @return string
-     */
-    public function getHmac()
-    {
-        return $this->getParameter('hmac');
-    }
-
-    /**
-     * Set Hmac
-     *
-     * Calls to the Payeezy Gateway API are secured with a gateway ID and
-     * password.
-     *
-     * @return PayeezyGateway provides a fluent interface.
-     */
-    public function setHmac($value)
-    {
-        return $this->setParameter('hmac', $value);
-    }
 
     /**
      * Create a purchase request.
      *
      * @param array $parameters
      *
-     * @return \Omnipay\FirstData\Message\PayeezyPurchaseRequest
+     * @return \Omnipay\Nuvei\Message\NuveiPurchaseRequest
      */
     public function purchase(array $parameters = array())
     {
-        return $this->createRequest('\Omnipay\FirstData\Message\PayeezyPurchaseRequest', $parameters);
+        return $this->createRequest(NuveiPurchaseRequest::class, $parameters);
     }
 
     /**
@@ -232,11 +172,12 @@ class Gateway extends AbstractGateway
      *
      * @param array $parameters
      *
-     * @return \Omnipay\FirstData\Message\PayeezyAuthorizeRequest
+     * @return \Omnipay\Nuvei\Message\NuveiAuthorizeRequest
      */
     public function authorize(array $parameters = array())
     {
-        return $this->createRequest('\Omnipay\FirstData\Message\PayeezyAuthorizeRequest', $parameters);
+        return $this->createRequest(NuveiAuthorizeRequest::class, $parameters);
+
     }
 
     /**
@@ -244,34 +185,34 @@ class Gateway extends AbstractGateway
      *
      * @param array $parameters
      *
-     * @return \Omnipay\FirstData\Message\PayeezyCaptureRequest
+     * @return \Omnipay\Nuvei\Message\NuveiCaptureRequest
      */
-    public function capture(array $parameters = array())
-    {
-        return $this->createRequest('\Omnipay\FirstData\Message\PayeezyCaptureRequest', $parameters);
-    }
+    // public function capture(array $parameters = array())
+    // {
+    //     return $this->createRequest(NuveiPurchaseRequest::class, $parameters);
+    // }
 
     /**
      * Create a refund request.
      *
      * @param array $parameters
      *
-     * @return \Omnipay\FirstData\Message\PayeezyRefundRequest
+     * @return \Omnipay\Nuvei\Message\NuveiRefundRequest
      */
-    public function refund(array $parameters = array())
-    {
-        return $this->createRequest('\Omnipay\FirstData\Message\PayeezyRefundRequest', $parameters);
-    }
+    // public function refund(array $parameters = array())
+    // {
+    //     return $this->createRequest(NuveiPurchaseRequest::class, $parameters);
+    // }
 
     /**
      * Create a void request.
      *
      * @param array $parameters
      *
-     * @return \Omnipay\FirstData\Message\PayeezyVoidRequest
+     * @return \Omnipay\Nuvei\Message\NuveiVoidRequest
      */
-    public function void(array $parameters = array())
-    {
-        return $this->createRequest('\Omnipay\FirstData\Message\PayeezyVoidRequest', $parameters);
-    }
+    // public function void(array $parameters = array())
+    // {
+    //     return $this->createRequest(NuveiPurchaseRequest::class, $parameters);
+    // }
 }

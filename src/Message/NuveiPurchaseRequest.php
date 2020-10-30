@@ -1,25 +1,27 @@
 <?php
 /**
- * First Data Payeezy Purchase Request
+ * Nuvei Purchase Request
  */
-namespace Omnipay\FirstData\Message;
+namespace Omnipay\Nuvei\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
+use Omnipay\Nuvei\Base\XmlPaymentRequest;
+use Omnipay\Nuvei\Message\AbstractNuveiRequest;
 
 /**
- * First Data Payeezy Purchase Request
+ * Nuvei Purchase Request
  *
  * ### Example
  *
  * <code>
- * // Create a gateway for the First Data Payeezy Gateway
+ * // Create a gateway for the Nuvei Gateway
  * // (routes to GatewayFactory::create)
- * $gateway = Omnipay::create('FirstData_Payeezy');
+ * $gateway = Omnipay::create('Nuvei');
  *
  * // Initialise the gateway
  * $gateway->initialize(array(
- *     'gatewayId' => '12341234',
- *     'password'  => 'thisISmyPASSWORD',
+ *     'terminalId' => '12341234',
+ *     'secret'  => 'thisISmyPASSWORD',
  *     'testMode'  => true, // Or false when you are ready for live transactions
  * ));
  *
@@ -79,16 +81,10 @@ use Omnipay\Common\Exception\InvalidRequestException;
  * }
  * </code>
  */
-class PayeezyPurchaseRequest extends PayeezyAbstractRequest
+class NuveiPurchaseRequest extends AbstractNuveiRequest
 {
 
     protected $action = self::TRAN_PURCHASE;
-    const CUSTOMER_ID_TYPE = [
-        0 => "license",
-        1 => "ssn",
-        2 => "taxId",
-        3 => "militaryId"
-    ];
 
     public function getData()
     {
@@ -104,37 +100,53 @@ class PayeezyPurchaseRequest extends PayeezyAbstractRequest
     }
 
     protected function getCardData($data){
-        $this->validate('amount', 'card');
+        $this->validate('amount','transactionId', 'card');
+        $this->getCard()->validate();
 
-        $data['amount'] = $this->getAmount();
-        $data['currency_code'] = $this->getCurrency();
-        $data['reference_no'] = $this->getTransactionId();
+        $request = new XmlPaymentRequest(
+            $this->getTerminalId(),
+            $this->getTransactionId(),
+            $this->getCurrency(),
+            $this->getAmount(),
+            $this->getCard()->getNumber(),
+            self::getCardType($this->getCard()->getBrand())
+        );
 
-        // add credit card details
-        if ($this->getCardReference()) {
-            $this->validate('tokenCardType');
-            $data['transarmor_token'] = $this->getCardReference();
-            $data['credit_card_type'] = $this->getTokenCardType();
-        } else {
-            $this->getCard()->validate();
-            $data['credit_card_type'] = self::getCardType($this->getCard()->getBrand());
-            $data['cc_number'] = $this->getCard()->getNumber();
+        $request->SetNonSecureCardCardInfo(
+            $this->getCard()->getExpiryDate("my"),
+            $this->getCard()->getName()
+        );
+        $request->SetCvv($this->getCard()->getCvv());
 
-            $this->appendAVS($data);
-            $this->appendCvv($data);
+        $request->SetAvs(
+            $this->getCard()->getAddress1(),
+            $this->getCard()->getAddress2(),
+            $this->getCard()->getPostcode(),
+        );
+        $request->SetCity($this->getCard()->getCity());
+        $request->SetRegion($this->getCard()->getState());
+        $request->SetCountry($this->getCard()->getCountry());
+        $request->SetPhone($this->getCard()->getPhone());
+
+        $request->SetEmail($this->getCard()->getEmail());
+        $request->SetIPAddress($this->getClientIp());
+        $request->SetDescription($this->getDescription());
+
+        $request->SetAutoReady($this->getAutoReady());
+        $request->SetIssueNo($this->getIssueNo());
+        $request->SetMpiref($this->getMpiref());
+        $request->SetDeviceID($this->getDevice());
+
+        if($this->getMulticur()){
+            //Must come before SetHash
+            $request->SetMultiCur();
         }
-        $data['cardholder_name'] = $this->getCard()->getName();
-        $data['cc_expiry'] = $this->getCard()->getExpiryDate('my');
+        $request->SetHash($this->getSecret());
 
-        $data['client_ip'] = $this->getClientIp();
-        $data['client_email'] = $this->getCard()->getEmail();
-        $data['language'] = strtoupper($this->getCard()->getCountry());
-
-        return $data;
+        return $request->toArray();
     }
 
     protected function getAchData($data){
-
         $this->validate('amount', 'ach');
         $this->getAch()->validate();
 
@@ -148,7 +160,6 @@ class PayeezyPurchaseRequest extends PayeezyAbstractRequest
 
         $data['check_type'] = $this->getAch()->getCheckType();
         $data['check_number'] = $this->getAch()->getCheckNumber();
-
 
         $this->appendAch($data);
         $this->appendAchAuth($data);
@@ -174,22 +185,13 @@ class PayeezyPurchaseRequest extends PayeezyAbstractRequest
     }
 
     protected function appendCvv(&$data){
-        $data['cvd_presence_ind'] = 1;
+        $data['cvd_code'] = $this->getCard()->getCvv();
 
-        if($this->getApiVersion() <= 13){
-            $data['cc_verification_str2'] = $this->getCard()->getCvv();
-        }else{
-            $data['cvd_code'] = $this->getCard()->getCvv();
-        }
     }
 
     protected function appendAVS(&$data)
     {
-        if($this->getApiVersion() <= 13){
-            $data['cc_verification_str1'] = $this->getAVSHash();
-        }else{
-            $data['address'] = $this->getAddress();
-        }
+        $data['address'] = $this->getAddress();
     }
 
     protected function appendAch(&$data){

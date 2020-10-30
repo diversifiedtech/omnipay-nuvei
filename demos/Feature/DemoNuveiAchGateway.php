@@ -1,22 +1,22 @@
 <?php
 
-namespace Omnipay\FirstData\Feature;
+namespace Omnipay\Nuvei\Feature;
 
 use Omnipay\Common\CreditCard;
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Exception\InvalidResponseException;
-use Omnipay\FirstData\Ach;
-use Omnipay\FirstData\Exception\InvalidAchException;
+use Omnipay\Nuvei\Ach;
+use Omnipay\Nuvei\Exception\InvalidAchException;
 use Omnipay\Omnipay;
 use Omnipay\Tests\GatewayTestCase;
 use PHPUnit\Framework\TestCase;
 
-class DemoPayeezyAchGatewayTest extends TestCase
+class DemoNuveiAchGateway extends TestCase
 {
     public function setUp()
     {
         parent::setUp();
-        $this->gateway = Omnipay::create('FirstData_Payeezy');
+        $this->gateway = Omnipay::create('Nuvei_Nuvei');
         $this->gateway->initialize([
             'gatewayId' => $_ENV['DEMO_GATEWAYID'],
             'password' => $_ENV['DEMO_PASSWORD'],
@@ -76,25 +76,6 @@ class DemoPayeezyAchGatewayTest extends TestCase
 
     public function test_ach_purchase_with_additional_fields()
     {
-
- // * * checkType
- // * * accountNumber
- // * * routingNumber
- // * * checkNumber
- // * * customerIDType ->
- // * * license ->
- // * * licenseState ->
- // * * ssn ->
- // * * taxId ->
- // * * militaryId ->
- // *
- // * * customer ->
- // * * ecommerceFlag ->
- // * * releaseType ->
- // * * vip ->
- // * * clerk ->
- // * * device ->
- // * * micr  ->
         $ach = new Ach([
             'firstName'            => 'Example',
             'lastName'             => 'Customer',

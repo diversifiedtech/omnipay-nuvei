@@ -1,20 +1,11 @@
 <?php
 /**
- * First Data Payeezy Response
+ * Nuvei Response
  */
-namespace Omnipay\FirstData\Message;
+namespace Omnipay\Nuvei\Message;
 
 /**
- * First Data Payeezy Response Extras
- *
- * ### Quirks
- *
- * This gateway requires both a transaction reference (aka an authorization number)
- * and a transaction tag to implement either voids or refunds.  These are referred
- * to in the documentation as "tagged refund" and "tagged voids".
- *
- * The transaction reference returned by this class' getTransactionReference is a
- * concatenated value of the authorization number and the transaction tag.
+ * Nuvei Response Extras
  */
 trait ResponseHelper{
 
