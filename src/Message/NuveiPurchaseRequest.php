@@ -5,7 +5,8 @@
 namespace Omnipay\Nuvei\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
-use Omnipay\Nuvei\Base\XmlPaymentRequest;
+use Omnipay\Nuvei\Base\XmlAchPaymentRequest;
+use Omnipay\Nuvei\Base\XmlCardPaymentRequest;
 use Omnipay\Nuvei\Message\AbstractNuveiRequest;
 
 /**
@@ -85,14 +86,18 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
 {
 
     protected $action = self::TRAN_PURCHASE;
+    const ACCOUNT_TYPE = [
+        "C" => "CHECKING",
+        "S" => "SAVINGS"
+    ];
 
     public function getData()
     {
         $data = parent::getData();
 
-        if($this->paymentMethod == "card"){
+        if($this->isCard()){
             return $this->getCardData($data);
-        }else if ($this->paymentMethod == "ach" || $this->paymentMethod == "check"){
+        }else if ($this->isAch()){
             return $this->getAchData($data);
         }
         throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');
@@ -103,7 +108,7 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
         $this->validate('amount','transactionId', 'card');
         $this->getCard()->validate();
 
-        $request = new XmlPaymentRequest(
+        $request = new XmlCardPaymentRequest(
             $this->getTerminalId(),
             $this->getTransactionId(),
             $this->getCurrency(),
@@ -150,26 +155,43 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
         $this->validate('amount', 'ach');
         $this->getAch()->validate();
 
-        $data['amount'] = $this->getAmount();
-        $data['currency_code'] = $this->getCurrency();
-        $data['reference_no'] = $this->getTransactionId();
+        $request = new XmlAchPaymentRequest(
+            $this->getTerminalId(),
+            $this->getTransactionId(),
+            $this->getCurrency(),
+            $this->getAmount(),
+            $this->getAch()->getAccountNumber(),
+            $this->getAch()->getRoutingNumber(),
+            $this->getAch()->getName()
+        );
 
-        $data['account_number'] = $this->getAch()->getAccountNumber();
-        $data['routing_number'] = $this->getAch()->getRoutingNumber();
-        $data['cardholder_name'] = $this->getAch()->getName();
 
-        $data['check_type'] = $this->getAch()->getCheckType();
-        $data['check_number'] = $this->getAch()->getCheckNumber();
+        $request->SetAccountType($this->getAccountType());
 
-        $this->appendAch($data);
-        $this->appendAchAuth($data);
-        $this->appendAVS($data);
 
-        $data['client_ip'] = $this->getClientIp();
-        $data['client_email'] = $this->getAch()->getEmail();
-        $data['language'] = strtoupper($this->getAch()->getCountry());
+        $request->setCheckNumber($this->getAch()->getCheckNumber());
 
-        return $data;
+
+        $request->SetAvs(
+            $this->getAch()->getAddress1(),
+            $this->getAch()->getAddress2(),
+            $this->getAch()->getPostcode(),
+        );
+        $request->SetCity($this->getAch()->getCity());
+        $request->SetRegion($this->getAch()->getState());
+        $request->SetCountry($this->getAch()->getCountry());
+        $request->SetPhone($this->getAch()->getPhone());
+
+        $request->SetEmail($this->getAch()->getEmail());
+        $request->SetIPAddress($this->getClientIp());
+        $request->SetDescription($this->getDescription());
+
+        $request->SetLicenseNumber($this->getAch()->getLicense());
+        $request->SetLicenseState($this->getAch()->getLicenseState());
+
+        $request->SetHash($this->getSecret());
+
+        return $request->toArray();
     }
 
 
@@ -184,53 +206,12 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
         return $this->setParameter('tokenCardType', $value);
     }
 
-    protected function appendCvv(&$data){
-        $data['cvd_code'] = $this->getCard()->getCvv();
-
-    }
-
-    protected function appendAVS(&$data)
-    {
-        $data['address'] = $this->getAddress();
-    }
-
-    protected function appendAch(&$data){
-        $data['release_type'] = $this->getAch()->getReleaseType();
-        $data['vip'] = $this->getAch()->getVip();
-        $data['clerk_id'] = $this->getAch()->getClerk();
-        $data['device_id'] = $this->getAch()->getDevice();
-        $data['micr'] = $this->getAch()->getMicr();
-        $data['ecommerce_flag'] = $this->getAch()->getEcommerceFlag();
-    }
-
-    protected function appendAchAuth(&$data){
-        $license = $this->getAch()->getLicense();
-        if($license){
-            $data['customer_id_type'] = 0;
-            $data['customer_id_number'] = $license;
-            return $data;
+    public function getAccountType(){
+        $checkType = strtoupper($this->getAch()->getCheckType());
+        if($checkType != null && isset(static::ACCOUNT_TYPE[$checkType])){
+            $checkType = static::ACCOUNT_TYPE[$checkType];
         }
-
-        $SSN = $this->getAch()->getSSN();
-        if($SSN){
-            $data['customer_id_type'] = 1;
-            $data['customer_id_number'] = $SSN;
-            return $data;
-        }
-
-        $taxId = $this->getAch()->getTaxID();
-        if($taxId){
-            $data['customer_id_type'] = 2;
-            $data['customer_id_number'] = $taxId;
-            return $data;
-        }
-
-        $militaryId = $this->getAch()->getMilitaryId();
-        if($militaryId){
-            $data['customer_id_type'] = 3;
-            $data['customer_id_number'] = $militaryId;
-            return $data;
-        }
+        return $checkType;
     }
 }
 

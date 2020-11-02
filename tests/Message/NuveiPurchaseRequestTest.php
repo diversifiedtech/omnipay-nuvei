@@ -18,7 +18,6 @@ class NuveiPurchaseRequestTest extends TestCase
             'transactionId' => "123"
         ]);
 
-        // $this->assertEquals(31,$request->getApiVersion());
         $data = $request->getData();
 
         $this->assertEquals('2', $data['TERMINALTYPE']);

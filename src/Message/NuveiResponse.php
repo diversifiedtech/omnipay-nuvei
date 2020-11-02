@@ -31,11 +31,16 @@ class NuveiResponse extends AbstractResponse
 {
     // use ResponseHelper, AchResponseHelper;
     const INVALID_RESPONSE_STRING = "Invalid Response";
+    protected $isCard = false;
 
     public function __construct(RequestInterface $request, $data)
     {
         $this->request = $request;
 
+        $this->isCard = $this->request->isCard();
+
+        // var_dump($data);
+// die();
         $this->data = new XmlPaymentResponse($data);
 
     }
@@ -66,7 +71,9 @@ class NuveiResponse extends AbstractResponse
      */
     public function isSuccessful()
     {
-        return ($this->data->ResponseCode() == 'A') ? true : false;
+        $code = $this->isCard ? "A" : "E";
+        return ($this->data->ResponseCode() == $code) ? true : false;
+
     }
 
     /**
@@ -243,6 +250,10 @@ class NuveiResponse extends AbstractResponse
      */
     public function getCardType()
     {
+        $card = $this->request->getCard();
+        if($card == null){
+            return null;
+        }
         return AbstractNuveiRequest::getCardType($this->request->getCard()->getBrand());
     }
 
@@ -253,7 +264,11 @@ class NuveiResponse extends AbstractResponse
      */
     public function getCardNumber()
     {
-        $num = $this->request->getCard()->getNumber();
+        $card = $this->request->getCard();
+        if($card == null){
+            return null;
+        }
+        $num = $card->getNumber();
         return str_repeat('#', strlen($num) - 4) . substr($num, -4);
     }
 

@@ -9,7 +9,8 @@ use Omnipay\Common\CreditCard;
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Nuvei\Ach;
 use Omnipay\Nuvei\Base\Request;
-use Omnipay\Nuvei\Base\XmlPaymentRequest;
+use Omnipay\Nuvei\Base\XmlAchPaymentRequest;
+use Omnipay\Nuvei\Base\XmlCardPaymentRequest;
 
 /**
  * Nuvei Nuvei Abstract Request
@@ -32,6 +33,8 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
 
     /** @var string payment method */
     protected $paymentMethod = 'card';
+
+    protected $sec_code = "WEB";
 
     //
     // Transaction types
@@ -154,6 +157,29 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
     public function setMulticur($value)
     {
         return $this->setParameter('multicur', $value);
+    }
+
+    /**
+     * Set sec code
+     *
+     * @param int $transactionType
+     *
+     * @return NuveiAbstractRequest provides a fluent interface.
+     */
+    public function setSecCode($sec_code)
+    {
+        $this->sec_code = $sec_code;
+        return $this;
+    }
+
+    /**
+     * Get sec code
+     *
+     * @return int
+     */
+    public function getSecCode()
+    {
+        return $this->sec_code;
     }
 
     /**
@@ -431,14 +457,23 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
      */
     public function sendData($data)
     {
+        if($this->isCard()){
+            $data = XmlCardPaymentRequest::toXml($data);
+        }else if ($this->isAch()){
+            $data = XmlAchPaymentRequest::toXml($data);
+        }else{
+            throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');
+        }
         $headers  = $this->getHeaders();
         $endpoint = $this->getEndpoint();
 
+
+        // var_dump($data);
         $httpResponse = $this->httpClient->request(
             "POST",
             $endpoint,
             $headers,
-            XmlPaymentRequest::toXml($data)
+            $data
         );
 
         return $this->createResponse($httpResponse->getBody()->getContents());

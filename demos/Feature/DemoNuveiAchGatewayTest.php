@@ -7,81 +7,92 @@ use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Exception\InvalidResponseException;
 use Omnipay\Nuvei\Ach;
 use Omnipay\Nuvei\Exception\InvalidAchException;
+use Omnipay\Nuvei\Exception\InvalidNuveiResponseException;
+use Omnipay\Nuvei\Gateway;
 use Omnipay\Omnipay;
 use Omnipay\Tests\GatewayTestCase;
 use PHPUnit\Framework\TestCase;
 
-class DemoNuveiAchGateway extends TestCase
+class DemoNuveiAchGatewayTest extends TestCase
 {
+
     public function setUp()
     {
         parent::setUp();
-        $this->gateway = Omnipay::create('Nuvei_Nuvei');
+        $this->gateway = Omnipay::create('Nuvei');
+
         $this->gateway->initialize([
-            'gatewayId' => $_ENV['DEMO_GATEWAYID'],
-            'password' => $_ENV['DEMO_PASSWORD'],
-            'hmac' => $_ENV['DEMO_HMAC'],
-            'keyId' => $_ENV['DEMO_KEYID'],
+            'terminalid' => $_ENV['DEMO_TERMINAL_ID'],
+            'currency' => "USD",
+            'secret' => $_ENV['DEMO_SECRET'],
             'testMode'  => true,
         ]);
-
     }
 
     /**
      * Everything was successful
      */
-    public function test_ach_purchase_was_successful()
+    public function test_ach_nuvei_purchase_success()
     {
+
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+
         $ach = new Ach([
             'firstName'            => 'Example',
-            'lastName'             => 'Customer',
+            'lastName'             => 'Customerx',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
-            // 'checkType'            => 'P',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
+            'checkType'            => 'CHECKING',
         ]);
+
+        $id = Gateway::generateUniqueOrderId();
 
         $response = $this->gateway->purchase([
             'description'              => 'Your order for widgets',
-            'amount'                   => '10.00',
-            'transactionId'            => 12345,
+            'amount'                   => '12.00',
+            'transactionId'            => $id,
             'clientIp'                 => "1.2.3.4",
             'ach'                      => $ach,
         ])->send();
 
         $this->assertTrue($response->isSuccessful());
 
-        $this->assertNotNull($response->getAuthorizationNumber());
         $this->assertNull($response->getCardReference());
 
-        $this->assertNotNull($response->getTransactionTag());
+        $this->assertNotNull($response->getAuthorizationNumber());
         $this->assertNotNull($response->getTransactionReference());
-        $this->assertNotNull($response->getSequenceNo());
-
-        $this->assertEquals($response->getCode(),"00");
-        $this->assertEquals($response->getMessage(),"Approved");
-        $this->assertEquals($response->getBankCode(),"100");
-        $this->assertEquals($response->getExactMessage(),"Transaction Normal");
-        $this->assertEquals($response->getBankMessage(),"Approved");
-
-        $this->assertEquals($response->getCardType(),"Telecheck");
-        $this->assertNull($response->getCardNumber());
-        $this->assertEquals($response->getCheckNumber(),2020);
+        $this->assertEquals($id,$response->getTransactionId());
 
 
-        $this->assertNull($response->getEmail());
+        $this->assertEquals($response->getCode(),"E");
+        $this->assertEquals($response->getResponseCode(),"E");
+        $this->assertEquals($response->getBankResponseCode(),null);
 
+        $this->assertEquals($response->getMessage(),"ACCEPTED");
+        $this->assertEquals($response->getResponseMessage(),"ACCEPTED");
 
+        $this->assertEquals($response->getCvvResponse(),null);
+        $this->assertEquals($response->getAvsResponse(),null);
+
+        $this->assertEquals($response->getCardType(),null);
+        $this->assertEquals($response->getCardNumber(),null);
     }
 
-    public function test_ach_purchase_with_additional_fields()
+    public function test_ach_nuvei_purchase_success_with_additional_fields()
     {
+
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+        $id = Gateway::generateUniqueOrderId();
+
         $ach = new Ach([
             'firstName'            => 'Example',
             'lastName'             => 'Customer',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
             'address1'             => '1 Scrubby Creek Road',
             'country'              => 'AU',
             'city'                 => 'Scrubby Creek',
@@ -96,12 +107,14 @@ class DemoNuveiAchGateway extends TestCase
             'device'               => 'BBBB',
             'micr'                 => 'CCCC',
             'ecommerce_flag'       => 7,
+            'license'              => "123456789",
+            'license_state'        => "PA",
         ]);
 
         $response = $this->gateway->purchase([
             'description'              => 'Your order for widgets',
             'amount'                   => '10.00',
-            'transactionId'            => 12345,
+            'transactionId'            => $id,
             'clientIp'                 => "1.2.3.4",
             'ach'                      => $ach,
             // 'customerIDType'           => 0
@@ -109,52 +122,41 @@ class DemoNuveiAchGateway extends TestCase
 
         $this->assertTrue($response->isSuccessful());
 
-        $this->assertNotNull($response->getAuthorizationNumber());
         $this->assertNull($response->getCardReference());
 
-        $this->assertNotNull($response->getTransactionTag());
+        $this->assertNotNull($response->getAuthorizationNumber());
         $this->assertNotNull($response->getTransactionReference());
-        $this->assertNotNull($response->getSequenceNo());
+        $this->assertEquals($id,$response->getTransactionId());
 
-        $this->assertEquals($response->getCode(),"00");
-        $this->assertEquals($response->getMessage(),"Approved");
-        $this->assertEquals($response->getBankCode(),"100");
-        $this->assertEquals($response->getExactMessage(),"Transaction Normal");
-        $this->assertEquals($response->getBankMessage(),"Approved");
 
-        $this->assertEquals($response->getCardType(),"Telecheck");
-        $this->assertNull($response->getCardNumber());
-        $this->assertEquals($response->getCheckNumber(),123);
+        $this->assertEquals($response->getCode(),"E");
+        $this->assertEquals($response->getResponseCode(),"E");
+        $this->assertEquals($response->getBankResponseCode(),null);
 
-        $this->assertNotNull($response->getAddress());
-        $this->assertEquals($response->getEmail(),"example@email.com");
-        $this->assertEquals($response->getAddress1(), '1 Scrubby Creek Road');
-        $this->assertNull($response->getAddress2());
-        $this->assertEquals($response->getCountry(), 'AU');
-        $this->assertEquals($response->getCity(), 'Scrubby Creek');
-        $this->assertEquals($response->getPostCode(), '4999');
-        $this->assertEquals($response->getState(), 'PA');
-        $this->assertEquals($response->getPhone(), '5551234567');
+        $this->assertEquals($response->getMessage(),"ACCEPTED");
+        $this->assertEquals($response->getResponseMessage(),"ACCEPTED");
 
-        $this->assertEquals($response->getCheckType(),"C");
+        $this->assertEquals($response->getCvvResponse(),null);
+        $this->assertEquals($response->getAvsResponse(),null);
 
-        $this->assertEquals($response->getCheckType(),"C");
-        $this->assertEquals($response->getReleaseType(),'D');
-        $this->assertEquals($response->getVip(),false);
-        $this->assertEquals($response->getClerk(),'AAAA');
-        $this->assertEquals($response->getEcommerceFlag(),7);
-        $this->assertNotNull($response->getCtr());
+        $this->assertEquals($response->getCardType(),null);
+        $this->assertEquals($response->getCardNumber(),null);
     }
 
     public function test_ach_purchase_with_address()
     {
+
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+        $id = Gateway::generateUniqueOrderId();
+
         $ach = new Ach([
             'firstName'            => 'Example',
             'lastName'             => 'Customer',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
-            'checkType'            => 'P',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
+            'checkType'            => 'CHECKING',
             'address1'             => '1 Scrubby Creek Road',
             'country'              => 'AU',
             'city'                 => 'Scrubby Creek',
@@ -167,52 +169,27 @@ class DemoNuveiAchGateway extends TestCase
         $response = $this->gateway->purchase([
             'description'              => 'Your order for widgets',
             'amount'                   => '10.00',
-            'transactionId'            => 12345,
+            'transactionId'            => $id,
             'clientIp'                 => "1.2.3.4",
             'ach'                      => $ach,
-            // 'customerIDType'           => 0
         ])->send();
 
-
         $this->assertTrue($response->isSuccessful());
-
-        $this->assertNotNull($response->getAuthorizationNumber());
-        $this->assertNull($response->getCardReference());
-
-        $this->assertNotNull($response->getTransactionTag());
-        $this->assertNotNull($response->getTransactionReference());
-        $this->assertNotNull($response->getSequenceNo());
-
-        $this->assertEquals($response->getCode(),"00");
-        $this->assertEquals($response->getMessage(),"Approved");
-        $this->assertEquals($response->getBankCode(),"100");
-        $this->assertEquals($response->getExactMessage(),"Transaction Normal");
-        $this->assertEquals($response->getBankMessage(),"Approved");
-
-        $this->assertEquals($response->getCardType(),"Telecheck");
-        $this->assertNull($response->getCardNumber());
-        $this->assertEquals($response->getCheckNumber(),2020);
-
-        $this->assertNotNull($response->getAddress());
-        $this->assertEquals($response->getEmail(),"example@email.com");
-        $this->assertEquals($response->getAddress1(), '1 Scrubby Creek Road');
-        $this->assertNull($response->getAddress2());
-        $this->assertEquals($response->getCountry(), 'AU');
-        $this->assertEquals($response->getCity(), 'Scrubby Creek');
-        $this->assertEquals($response->getPostCode(), '4999');
-        $this->assertEquals($response->getState(), 'PA');
-        $this->assertEquals($response->getPhone(), '5551234567');
     }
 
     public function test_ach_purchase_with_auth()
     {
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+        $id = Gateway::generateUniqueOrderId();
+
         $ach = new Ach([
             'firstName'            => 'Example',
             'lastName'             => 'Customer',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
-            'checkType'            => 'P',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
+            'checkType'            => 'C',
             'address1'             => '1 Scrubby Creek Road',
             'country'              => 'AU',
             'city'                 => 'Scrubby Creek',
@@ -227,7 +204,7 @@ class DemoNuveiAchGateway extends TestCase
         $response = $this->gateway->purchase([
             'description'              => 'Your order for widgets',
             'amount'                   => '10.00',
-            'transactionId'            => 12345,
+            'transactionId'            => $id,
             'clientIp'                 => "1.2.3.4",
             'ach'                      => $ach,
         ])->send();
@@ -242,12 +219,17 @@ class DemoNuveiAchGateway extends TestCase
     {
         $this->expectException(InvalidRequestException::class);
         $this->expectExceptionMessage("The amount parameter is required");
+
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+
         $ach = new Ach([
             'firstName'            => 'Example',
-            'lastName'             => 'Customer',
+            'lastName'             => 'Customerx',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
+            'checkType'            => 'CHECKING',
         ]);
 
         $response = $this->gateway->purchase([
@@ -284,29 +266,46 @@ class DemoNuveiAchGateway extends TestCase
         ])->send();
 
     }
+
     /**
      * An exception was thrown because the response came back in a bad format
      */
     public function test_ach_purchase_error()
     {
 
-        $this->expectException(InvalidResponseException::class);
-        $this->expectExceptionMessage("Bad Request (69) - Invalid Transaction Tag");
+        $this->expectException(InvalidNuveiResponseException::class);
+        $this->expectExceptionMessage("Order Already Processed");
+
+        $id = Gateway::generateUniqueOrderId();
+
+        $AN = rand(0,9999999999);
+        $CN = rand(0,9999);
+
         $ach = new Ach([
             'firstName'            => 'Example',
-            'lastName'             => 'Customer',
+            'lastName'             => 'Customerx',
             'routingNumber'        => '021000021',
-            'accountNumber'        => '2020',
-            'checkNumber'          => '123',
+            'accountNumber'        => $AN,
+            'checkNumber'          => $CN,
+            'checkType'            => 'CHECKING',
         ]);
 
         $response = $this->gateway->purchase([
             'description'              => 'Your order for widgets',
-            'amount'                   => '5000.69',
-            'transactionId'            => 12345,
+            'amount'                   => '100.05',
+            'transactionId'            => $id,
             'clientIp'                 => "1.2.3.4",
             'ach'                     => $ach,
         ])->send();
+
+        $response = $this->gateway->purchase([
+            'description'              => 'Your order for widgets',
+            'amount'                   => '100.05',
+            'transactionId'            => $id,
+            'clientIp'                 => "1.2.3.4",
+            'ach'                     => $ach,
+        ])->send();
+        var_dump($response->getData());
     }
 
     /**

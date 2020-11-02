@@ -5,7 +5,7 @@
 namespace Omnipay\Nuvei\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
-use Omnipay\Nuvei\Base\XmlPaymentRequest;
+use Omnipay\Nuvei\Base\XmlCardPaymentRequest;
 use Omnipay\Nuvei\Message\AbstractNuveiRequest;
 
 /**
