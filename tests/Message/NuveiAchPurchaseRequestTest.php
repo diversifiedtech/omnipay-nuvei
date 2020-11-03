@@ -64,8 +64,6 @@ class NuveiAchPurchaseRequestTest extends TestCase
 
         $data = $request->getData();
 
-        var_dump($data);
-
         $this->assertEquals('2', $data['TERMINALTYPE']);
 
         $this->assertEquals('123', $data['ORDERID']);
@@ -113,8 +111,6 @@ class NuveiAchPurchaseRequestTest extends TestCase
         ]);
 
         $data = $request->getData();
-
-        var_dump($data);
 
         $this->assertEquals('2', $data['TERMINALTYPE']);
 

@@ -156,7 +156,6 @@ class Ach
             'billingLastName' => 'last name',
             'routingNumber' => 'routing number',
             'accountNumber' => 'account number',
-            // 'checkNumber' => 'check number' // number => 'cehck number'
         );
 
 

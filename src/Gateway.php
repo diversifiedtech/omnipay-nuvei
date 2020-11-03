@@ -97,7 +97,6 @@ class Gateway extends AbstractGateway
         return array(
             'terminalId' => '',
             'secret' => '',
-            // 'currency' => 'USD',
             'testMode' => false,
         );
     }
