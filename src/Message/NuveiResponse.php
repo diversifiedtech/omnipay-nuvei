@@ -39,8 +39,6 @@ class NuveiResponse extends AbstractResponse
 
         $this->isCard = $this->request->isCard();
 
-        // var_dump($data);
-// die();
         $this->data = new XmlPaymentResponse($data);
 
     }

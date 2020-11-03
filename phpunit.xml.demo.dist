@@ -28,7 +28,6 @@
         <env name="DEMO_HMAC" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
         <env name="DEMO_KEYID" value="######"/>
         <env name="ACCOUNT_USERNAME" value="username"/>
-        <env name="ACCOUNT_USERNAME" value="username"/>
         <env name="ACCOUNT_USERNAME" value="password"/>
     </php>
 </phpunit>

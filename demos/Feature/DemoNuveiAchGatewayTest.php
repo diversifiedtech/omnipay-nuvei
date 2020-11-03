@@ -305,7 +305,6 @@ class DemoNuveiAchGatewayTest extends TestCase
             'clientIp'                 => "1.2.3.4",
             'ach'                     => $ach,
         ])->send();
-        var_dump($response->getData());
     }
 
     /**

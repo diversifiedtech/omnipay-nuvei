@@ -467,8 +467,6 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
         $headers  = $this->getHeaders();
         $endpoint = $this->getEndpoint();
 
-
-        // var_dump($data);
         $httpResponse = $this->httpClient->request(
             "POST",
             $endpoint,
