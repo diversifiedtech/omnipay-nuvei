@@ -126,7 +126,7 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
         $request->SetAvs(
             $this->getCard()->getAddress1(),
             $this->getCard()->getAddress2(),
-            $this->getCard()->getPostcode(),
+            $this->getCard()->getPostcode()
         );
         $request->SetCity($this->getCard()->getCity());
         $request->SetRegion($this->getCard()->getState());
