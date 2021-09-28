@@ -23,11 +23,12 @@
         </whitelist>
     </filter>
     <php>
-        <env name="DEMO_GATEWAYID" value="XXXXXX-XX"/>
-        <env name="DEMO_PASSWORD" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
-        <env name="DEMO_HMAC" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
-        <env name="DEMO_KEYID" value="######"/>
+        <env name="DEMO_TERMINAL_ID" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+        <env name="DEMO_SECRET" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+        <env name="DEMO_MID" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+
+        <env name="ACCOUNT_MID" value="######"/>
         <env name="ACCOUNT_USERNAME" value="username"/>
-        <env name="ACCOUNT_USERNAME" value="password"/>
+        <env name="ACCOUNT_USERNAME" value="password#n0l0gy2"/>
     </php>
 </phpunit>

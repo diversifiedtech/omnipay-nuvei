@@ -11,7 +11,7 @@ class AchTest extends TestCase
     /** @var Ach */
     private $ach;
 
-    public function setUp()
+    public function setUp() : void
     {
         $this->ach = new Ach;
         $this->ach->setRoutingNumber('021000021');
@@ -55,52 +55,45 @@ class AchTest extends TestCase
         $this->ach->validate();
     }
 
-    /**
-     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
-     * @expectedExceptionMessage The routing number is required
-     */
     public function testValidateRoutingNumberRequired()
     {
+        $this->expectException(\Omnipay\Nuvei\Exception\InvalidAchException::class);
+        $this->expectExceptionMessage('The routing number is required');
+
         $this->ach->setRoutingNumber(null);
         $this->ach->validate();
     }
-
-    /**
-     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
-     * @expectedExceptionMessage The account number is required
-     */
     public function testValidateAccountNumberRequired()
     {
+        $this->expectException(\Omnipay\Nuvei\Exception\InvalidAchException::class);
+        $this->expectExceptionMessage('The account number is required');
+
         $this->ach->setAccountNumber(null);
         $this->ach->validate();
     }
-
-    /**
-     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
-     * @expectedExceptionMessage The first name is required
-     */
     public function testValidateFirstNameRequired()
     {
+        $this->expectException(\Omnipay\Nuvei\Exception\InvalidAchException::class);
+        $this->expectExceptionMessage('The first name is required');
+
         $this->ach->setFirstName(null);
         $this->ach->validate();
     }
 
-    /**
-     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
-     * @expectedExceptionMessage The last name is required
-     */
+
     public function testValidateLastNameRequired()
     {
+        $this->expectException(\Omnipay\Nuvei\Exception\InvalidAchException::class);
+        $this->expectExceptionMessage('The last name is required');
+
         $this->ach->setLastName(null);
         $this->ach->validate();
     }
-
-    /**
-     * @expectedException \Omnipay\Nuvei\Exception\InvalidAchException
-     * @expectedExceptionMessage Routing Number is invalid
-     */
     public function testValidateRoutingNumber()
     {
+        $this->expectException(\Omnipay\Nuvei\Exception\InvalidAchException::class);
+        $this->expectExceptionMessage('Routing Number is invalid');
+
         $this->ach->setRoutingNumber('021000020');
         $this->ach->validate();
     }

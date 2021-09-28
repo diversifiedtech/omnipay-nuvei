@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 class DemoNuveiGatewayTest extends TestCase
 {
-    public function setUp()
+    public function setUp() : void
     {
         parent::setUp();
         $this->gateway = Omnipay::create('Nuvei');
