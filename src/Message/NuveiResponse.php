@@ -37,9 +37,10 @@ class NuveiResponse extends AbstractResponse
     {
         $this->request = $request;
 
-        $this->isCard = $this->request->isCard();
+        $this->isCard = $this->request->isCard() || $this->request->isStoredCard();
 
         $this->data = new XmlPaymentResponse($data);
+
 
     }
 
@@ -69,6 +70,9 @@ class NuveiResponse extends AbstractResponse
      */
     public function isSuccessful()
     {
+        if($this->data->ResponseCode() == "Success"){
+            return true;
+        }
         $code = $this->isCard ? "A" : "E";
         return ($this->data->ResponseCode() == $code) ? true : false;
 

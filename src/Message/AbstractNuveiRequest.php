@@ -11,6 +11,8 @@ use Omnipay\Nuvei\Ach;
 use Omnipay\Nuvei\Base\Request;
 use Omnipay\Nuvei\Base\XmlAchPaymentRequest;
 use Omnipay\Nuvei\Base\XmlCardPaymentRequest;
+use Omnipay\Nuvei\StoredAch;
+use Omnipay\Nuvei\StoredCard;
 
 /**
  * Nuvei Nuvei Abstract Request
@@ -346,6 +348,67 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
         return $this->paymentMethod == 'ach' || $this->paymentMethod == 'check';
     }
 
+    public function isStoredCard()
+    {
+        return $this->paymentMethod == 'storedCard';
+    }
+
+    public function isStoredAch()
+    {
+        return $this->paymentMethod == 'storedAch';
+    }
+
+    /**
+     * Get the ach.
+     *
+     * @return Ach
+     */
+    public function getStoredCard()
+    {
+        return $this->getParameter('storedCard');
+    }
+
+    /**
+     * Sets the ach.
+     *
+     * @param Ach $value
+     * @return $this
+     */
+    public function setStoredCard($value)
+    {
+        if ($value && !$value instanceof StoredCard) {
+            $value = new StoredCard($value);
+        }
+
+        $ach = $this->setParameter('storedCard', $value);
+        $this->setPaymentMethod('storedCard');
+        return $ach;
+    }
+
+
+    public function getStoredAch()
+    {
+        return $this->getParameter('storedAch');
+    }
+
+    /**
+     * Sets the ach.
+     *
+     * @param Ach $value
+     * @return $this
+     */
+    public function setStoredAch($value)
+    {
+        if ($value && !$value instanceof StoredAch) {
+            $value = new StoredAch($value);
+        }
+
+        $ach = $this->setParameter('storedAch', $value);
+        $this->setPaymentMethod('storedAch');
+        return $ach;
+    }
+
+
     /**
      * Get the ach.
      *
@@ -401,9 +464,9 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
      */
     public function getPaymentObject()
     {
-        if($this->isCard()){
+        if($this->isCard() || $this->isStoredCard()){
             return $this->getCard();
-        }else if($this->isAch()){
+        }else if($this->isAch() || $this->isStoredAch()){
             return $this->getAch();
         }
         throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');
@@ -457,9 +520,9 @@ abstract class AbstractNuveiRequest extends \Omnipay\Common\Message\AbstractRequ
      */
     public function sendData($data)
     {
-        if($this->isCard()){
+        if($this->isCard() || $this->isStoredCard()){
             $data = XmlCardPaymentRequest::toXml($data);
-        }else if ($this->isAch()){
+        }else if ($this->isAch() || $this->isStoredAch()){
             $data = XmlAchPaymentRequest::toXml($data);
         }else{
             throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');

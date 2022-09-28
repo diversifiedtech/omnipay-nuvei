@@ -5,6 +5,9 @@
 namespace Omnipay\Nuvei\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
+use Omnipay\Nuvei\Base\XmlAchAuthRequest;
+use Omnipay\Nuvei\Base\XmlAuthResponse;
+use Omnipay\Nuvei\Base\XmlCardAuthRequest;
 use Omnipay\Nuvei\Base\XmlCardPaymentRequest;
 use Omnipay\Nuvei\Message\AbstractNuveiRequest;
 
@@ -84,6 +87,134 @@ use Omnipay\Nuvei\Message\AbstractNuveiRequest;
 class NuveiAuthorizeRequest extends NuveiPurchaseRequest
 {
     protected $action = self::TRAN_PREAUTH;
+
+    /**
+     * Override so that the amount field is not required
+     * @param  [type] $data [description]
+     * @return [type]       [description]
+     */
+    protected function getCardData($data){
+        $this->validate('transactionId', 'card');
+        $this->getCard()->validate();
+
+        $request = new XmlCardAuthRequest(
+            $this->getTerminalId(),
+            $this->getTransactionId(),
+            $this->getCurrency(),
+            $this->getCard()->getNumber(),
+            self::getCardType($this->getCard()->getBrand())
+        );
+
+        $request->SetNonSecureCardCardInfo(
+            $this->getCard()->getExpiryDate("my"),
+            $this->getCard()->getName()
+        );
+        $request->SetCvv($this->getCard()->getCvv());
+
+        $request->SetAvs(
+            $this->getCard()->getAddress1(),
+            $this->getCard()->getAddress2(),
+            $this->getCard()->getPostcode()
+        );
+        $request->SetCity($this->getCard()->getCity());
+        $request->SetRegion($this->getCard()->getState());
+        $request->SetCountry($this->getCard()->getCountry());
+        $request->SetPhone($this->getCard()->getPhone());
+
+        $request->SetEmail($this->getCard()->getEmail());
+        $request->SetIPAddress($this->getClientIp());
+        $request->SetDescription($this->getDescription());
+
+        $request->SetAutoReady($this->getAutoReady());
+        $request->SetIssueNo($this->getIssueNo());
+        $request->SetMpiref($this->getMpiref());
+        $request->SetDeviceID($this->getDevice());
+
+        if($this->getMulticur()){
+            //Must come before SetHash
+            $request->SetMultiCur();
+        }
+        $request->SetHash($this->getCard()->getNumber(), $this->getCard()->getExpiryDate("my"), self::getCardType($this->getCard()->getBrand()), $this->getCard()->getName(), $this->getSecret());
+
+        return $request->toArray();
+    }
+
+
+    protected function getAchData($data){
+        $this->validate('amount', 'ach');
+        $this->getAch()->validate();
+
+        $request = new XmlAchAuthRequest(
+            $this->getTerminalId(),
+            $this->getTransactionId(),
+            $this->getCurrency(),
+            $this->getAch()->getAccountNumber(),
+            $this->getAch()->getRoutingNumber(),
+            $this->getAch()->getName()
+        );
+
+
+        $request->SetAccountType($this->getAccountType($this->getAch()));
+
+
+        $request->setCheckNumber($this->getAch()->getCheckNumber());
+
+
+        $request->SetAvs(
+            $this->getAch()->getAddress1(),
+            $this->getAch()->getAddress2(),
+            $this->getAch()->getPostcode()
+        );
+        $request->SetCity($this->getAch()->getCity());
+        $request->SetRegion($this->getAch()->getState());
+        $request->SetCountry($this->getAch()->getCountry());
+        $request->SetPhone($this->getAch()->getPhone());
+
+        $request->SetEmail($this->getAch()->getEmail());
+        $request->SetIPAddress($this->getClientIp());
+        $request->SetDescription($this->getDescription());
+
+        $request->SetLicenseNumber($this->getAch()->getLicense());
+        $request->SetLicenseState($this->getAch()->getLicenseState());
+
+
+        $request->SetHashAlt(
+            $this->getTerminalId(),
+            $this->getTransactionId(),
+            // "DateTime",
+            $this->getAch()->getAccountNumber(),
+            $this->getAch()->getName(),
+            $this->getAccountType($this->getAch()),
+            $this->getAch()->getRoutingNumber(),
+            $this->getSecret()
+        );
+
+        return $request->toArray();
+    }
+
+
+    public function sendData($data)
+    {
+        if($this->isCard()){
+            $data = XmlCardAuthRequest::toXml($data);
+        }else if ($this->isAch()){
+            $data = XmlAchAuthRequest::toXml($data);
+        }else{
+            throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');
+        }
+        $headers  = $this->getHeaders();
+        $endpoint = $this->getEndpoint();
+
+
+        $httpResponse = $this->httpClient->request(
+            "POST",
+            $endpoint,
+            $headers,
+            $data
+        );
+
+        return $this->createResponse($httpResponse->getBody()->getContents());
+    }
 
 }
 

@@ -95,9 +95,9 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
     {
         $data = parent::getData();
 
-        if($this->isCard()){
+        if($this->isCard() || $this->isStoredCard()){
             return $this->getCardData($data);
-        }else if ($this->isAch()){
+        }else if ($this->isAch() || $this->isStoredAch()){
             return $this->getAchData($data);
         }
         throw new InvalidRequestException('Invalid Payment Method (Must be "card" or "check")');
@@ -105,35 +105,43 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
     }
 
     protected function getCardData($data){
-        $this->validate('amount','transactionId', 'card');
-        $this->getCard()->validate();
+        if($this->isStoredCard()){
+            $this->validate('amount','transactionId', 'storedCard');
+            $card = $this->getStoredCard();
+        }else{
+            $this->validate('amount','transactionId', 'card');
+            $card = $this->getCard();
+        }
+
+        $card->validate();
 
         $request = new XmlCardPaymentRequest(
             $this->getTerminalId(),
             $this->getTransactionId(),
             $this->getCurrency(),
             $this->getAmount(),
-            $this->getCard()->getNumber(),
-            self::getCardType($this->getCard()->getBrand())
+            $card->getNumber(),
+            self::getCardType($card->getBrand())
         );
 
         $request->SetNonSecureCardCardInfo(
-            $this->getCard()->getExpiryDate("my"),
-            $this->getCard()->getName()
+            $card->getExpiryDate("my"),
+            $card->getName()
         );
-        $request->SetCvv($this->getCard()->getCvv());
+
+        $request->SetCvv($card->getCvv());
 
         $request->SetAvs(
-            $this->getCard()->getAddress1(),
-            $this->getCard()->getAddress2(),
-            $this->getCard()->getPostcode()
+            $card->getAddress1(),
+            $card->getAddress2(),
+            $card->getPostcode()
         );
-        $request->SetCity($this->getCard()->getCity());
-        $request->SetRegion($this->getCard()->getState());
-        $request->SetCountry($this->getCard()->getCountry());
-        $request->SetPhone($this->getCard()->getPhone());
+        $request->SetCity($card->getCity());
+        $request->SetRegion($card->getState());
+        $request->SetCountry($card->getCountry());
+        $request->SetPhone($card->getPhone());
 
-        $request->SetEmail($this->getCard()->getEmail());
+        $request->SetEmail($card->getEmail());
         $request->SetIPAddress($this->getClientIp());
         $request->SetDescription($this->getDescription());
 
@@ -152,42 +160,49 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
     }
 
     protected function getAchData($data){
-        $this->validate('amount', 'ach');
-        $this->getAch()->validate();
-
+        if($this->isStoredAch()){
+            $this->validate('amount','transactionId', 'storedAch');
+            $ach = $this->getStoredAch();
+        }else{
+            $this->validate('amount','transactionId', 'ach');
+            $ach = $this->getAch();
+        }
+        $ach->validate();
         $request = new XmlAchPaymentRequest(
             $this->getTerminalId(),
             $this->getTransactionId(),
             $this->getCurrency(),
             $this->getAmount(),
-            $this->getAch()->getAccountNumber(),
-            $this->getAch()->getRoutingNumber(),
-            $this->getAch()->getName()
+            $ach->getAccountNumber(),
+            $ach->getRoutingNumber(),
+            $ach->getName()
         );
 
+        $request->setIsStoredAch($this->isStoredAch());
 
-        $request->SetAccountType($this->getAccountType());
+
+        $request->SetAccountType($this->getAccountType($ach));
 
 
-        $request->setCheckNumber($this->getAch()->getCheckNumber());
+        $request->setCheckNumber($ach->getCheckNumber());
 
 
         $request->SetAvs(
-            $this->getAch()->getAddress1(),
-            $this->getAch()->getAddress2(),
-            $this->getAch()->getPostcode()
+            $ach->getAddress1(),
+            $ach->getAddress2(),
+            $ach->getPostcode()
         );
-        $request->SetCity($this->getAch()->getCity());
-        $request->SetRegion($this->getAch()->getState());
-        $request->SetCountry($this->getAch()->getCountry());
-        $request->SetPhone($this->getAch()->getPhone());
+        $request->SetCity($ach->getCity());
+        $request->SetRegion($ach->getState());
+        $request->SetCountry($ach->getCountry());
+        $request->SetPhone($ach->getPhone());
 
-        $request->SetEmail($this->getAch()->getEmail());
+        $request->SetEmail($ach->getEmail());
         $request->SetIPAddress($this->getClientIp());
         $request->SetDescription($this->getDescription());
 
-        $request->SetLicenseNumber($this->getAch()->getLicense());
-        $request->SetLicenseState($this->getAch()->getLicenseState());
+        $request->SetLicenseNumber($ach->getLicense());
+        $request->SetLicenseState($ach->getLicenseState());
 
         $request->SetHash($this->getSecret());
 
@@ -206,8 +221,8 @@ class NuveiPurchaseRequest extends AbstractNuveiRequest
         return $this->setParameter('tokenCardType', $value);
     }
 
-    public function getAccountType(){
-        $checkType = strtoupper($this->getAch()->getCheckType());
+    public function getAccountType($ach){
+        $checkType = strtoupper($ach->getCheckType());
         if($checkType != null && isset(static::ACCOUNT_TYPE[$checkType])){
             $checkType = static::ACCOUNT_TYPE[$checkType];
         }

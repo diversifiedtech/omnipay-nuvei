@@ -162,6 +162,69 @@ class XmlPaymentResponse
 				];
 			}
 		}
+		else if(strpos($responseXml, "SECURECARDREGISTRATIONRESPONSE")){
+
+			$responseNodes = $doc->getElementsByTagName("SECURECARDREGISTRATIONRESPONSE");
+
+			foreach( $responseNodes as $node )
+			{
+
+				$this->merchantRef = $this->getValue($node,'MERCHANTREF');
+				$this->cardReference = $this->getValue($node,'CARDREFERENCE');
+
+
+				$this->uniqueRef =  $this->getValue($node,'MERCHANTREF');
+				$this->responseCode = "Success";
+				$this->responseText = "Success";
+				$this->bankResponseCode = "Success";
+
+				$this->approvalCode = "Success";
+
+				$this->dateTime = $this->getValue($node,'DATETIME');
+				$this->hash = $this->getValue($node,'HASH');
+
+				$this->data = [
+					"uniqueRef" => $this->uniqueRef,
+					'merchantRef' => $this->merchantRef,
+					'cardReference' => $this->cardReference,
+					"responseText" => $this->responseText,
+					"bankResponseCode" => $this->bankResponseCode,
+					'dateTime' => $this->dateTime,
+					'hash' => $this->hash,
+				];
+			}
+		}
+		else if(strpos($responseXml, "ACHSECUREREGISTRATIONRESPONSE")){
+
+			$responseNodes = $doc->getElementsByTagName("ACHSECUREREGISTRATIONRESPONSE");
+
+			foreach( $responseNodes as $node )
+			{
+				$this->merchantRef = $this->getValue($node,'MERCHANTREF');
+				$this->achReference = $this->getValue($node,'ACHREFERENCE');
+
+
+				$this->uniqueRef =  $this->getValue($node,'MERCHANTREF');
+				$this->responseCode = "Success";
+				$this->responseText = "Success";
+				$this->bankResponseCode = "Success";
+
+				$this->approvalCode = "Success";
+
+				$this->dateTime = $this->getValue($node,'DATETIME');
+				$this->hash = $this->getValue($node,'HASH');
+
+				$this->data = [
+					"uniqueRef" => $this->uniqueRef,
+					'merchantRef' => $this->merchantRef,
+					'achReference' => $this->achReference,
+					"responseText" => $this->responseText,
+					"bankResponseCode" => $this->bankResponseCode,
+					'dateTime' => $this->dateTime,
+					'hash' => $this->hash,
+				];
+			}
+		}
 		else if (strpos($responseXml, "ERROR"))
 		{
 			$errorCode = static::DEFAULT_ERROR_CODE;
