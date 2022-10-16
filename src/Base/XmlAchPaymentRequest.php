@@ -197,7 +197,6 @@ class XmlAchPaymentRequest extends XmlPaymentRequest
 
 
             $node["HASH"] = $this->hash;
-            // dd($node,"POOP");
         }else{
 
             $node["CURRENCY"] = $this->currency;
